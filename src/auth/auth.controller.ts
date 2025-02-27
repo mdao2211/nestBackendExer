@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Request,
+  Response,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,7 +19,7 @@ import { AuthenticatedRequest } from './interface/authenticated-request.interfac
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-
+import { Response as ExpressResponse } from 'express';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
@@ -31,12 +32,13 @@ export class AuthController {
     status: 200,
     description: 'Trả về token JWT nếu đăng nhập thành công',
   })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto, @Response() res: ExpressResponse) {
     const user = await this.authService.validateUser(
       loginDto.email,
       loginDto.password,
     );
-    return this.authService.login(user);
+    const result = await this.authService.login(user, res);
+    return res.status(200).json(result);
   }
 
   @UseGuards(AuthGuard)
@@ -46,5 +48,13 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Thông tin người dùng' })
   getProfile(@Request() req: AuthenticatedRequest) {
     return req.user;
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Đăng xuất và xóa JWT Cookie' })
+  @ApiResponse({ status: 200, description: 'JWT Cookie bị xóa' })
+  async logout(@Response() res: ExpressResponse) {
+    res.clearCookie('jwtToken');
+    return res.status(200).json({ message: 'Đăng xuất thành công' });
   }
 }
