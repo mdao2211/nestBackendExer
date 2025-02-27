@@ -18,7 +18,7 @@ export class RoomsController {
   })
   @ApiResponse({ status: 404, description: 'Hotel not found.' })
   async findRoomsByHotelCode(
-    @Param('id') id: number,
+    @Param('id') id: string,
   ): Promise<RoomResponseDto[] | string> {
     return await this.roomsService.findRoomByHotelCode(id);
   }

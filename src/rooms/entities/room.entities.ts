@@ -14,7 +14,7 @@ export class Rooms {
 
   // @ApiProperty()
   @Column()
-  hotelcode: number;
+  hotelcode: string;
 
   // @ApiProperty()
   @Column()

@@ -13,7 +13,7 @@ export class RoomResponseDto {
   roomtype: number;
 
   @ApiProperty()
-  hotelcode: number;
+  hotelcode: string;
 
   @ApiProperty()
   occupancy: number;

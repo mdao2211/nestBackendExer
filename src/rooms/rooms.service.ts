@@ -12,7 +12,7 @@ export class RoomsService {
   ) {}
 
   async findRoomByHotelCode(
-    hotelcode: number,
+    hotelcode: string,
   ): Promise<RoomResponseDto[] | string> {
     const rooms = await this.roomRepository.find({
       where: { hotelcode },
