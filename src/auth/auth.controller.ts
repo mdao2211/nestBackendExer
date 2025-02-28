@@ -20,10 +20,20 @@ import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Response as ExpressResponse } from 'express';
+import { RequestWithCsrf } from './interface/authenticated-request-csrf';
+
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get('csrf-token')
+  @ApiOperation({ summary: 'Lấy CSRF token' })
+  getCsrfToken(@Request() req: RequestWithCsrf): { csrfToken: string } {
+    // Chỉ gọi req.csrfToken() một lần và trả về giá trị token
+    const token = req.csrfToken();
+    return { csrfToken: token };
+  }
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
@@ -54,7 +64,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Đăng xuất và xóa JWT Cookie' })
   @ApiResponse({ status: 200, description: 'JWT Cookie bị xóa' })
   async logout(@Response() res: ExpressResponse) {
-    res.clearCookie('jwtToken');
+    res.clearCookie('jwtToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/', // Đảm bảo path khớp với khi cookie được set
+    });
     return res.status(200).json({ message: 'Đăng xuất thành công' });
   }
 }
