@@ -3,7 +3,8 @@ import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
-import * as csurf from 'csurf';
+import { doubleCsrf } from 'csrf-csrf';
+import { Request, Response } from 'express';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -17,15 +18,30 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.use(
-    csurf({
-      cookie: {
-        httpOnly: false, // Cho phép client đọc token
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-      },
-    }),
-  );
+  // Cấu hình doubleCsrf
+  const { doubleCsrfProtection, generateToken } = doubleCsrf({
+    getSecret: (req: Request) => req.cookies['csrfSecret'], // Hàm lấy secret từ cookie
+    cookieName: 'csrfToken', // Tên cookie chứa token
+    cookieOptions: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    },
+    size: 64, // Kích thước của token
+    ignoredMethods: ['GET', 'HEAD', 'OPTIONS'], // Các phương thức bỏ qua kiểm tra CSRF
+  });
+
+  // Sử dụng middleware bảo vệ CSRF
+  app.use(doubleCsrfProtection);
+
+  // Lấy instance Express từ NestJS
+  const server = app.getHttpAdapter().getInstance();
+
+  // Tạo route để lấy CSRF token với kiểu rõ ràng cho req và res
+  server.get('/csrf-token', (req: Request, res: Response) => {
+    const csrfToken = generateToken(req, res);
+    res.json({ csrfToken });
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
