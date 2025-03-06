@@ -21,6 +21,9 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Response as ExpressResponse } from 'express';
 import { RequestWithCsrf } from './interface/authenticated-request-csrf';
+import { RolesGuard } from '@/roles/roles.guard';
+import { Role } from '@/enum/role.enum';
+import { Roles } from '@/roles/roles.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -58,6 +61,17 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Thông tin người dùng' })
   getProfile(@Request() req: AuthenticatedRequest) {
     return req.user;
+  }
+
+  // Endpoint chỉ dành cho admin: Sử dụng AuthGuard và RolesGuard cùng với decorator @Roles
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
+  @Get('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Endpoint dành cho Admin' })
+  @ApiResponse({ status: 200, description: 'Thông tin dành cho Admin' })
+  getAdminData(@Request() req: AuthenticatedRequest) {
+    return { message: 'Chào mừng Admin', user: req.user };
   }
 
   @Post('logout')

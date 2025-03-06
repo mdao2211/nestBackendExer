@@ -2,6 +2,7 @@ import { Injectable, Post, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
+import { Role } from '@/enum/role.enum';
 @Injectable()
 export class AuthService {
   constructor(
@@ -19,7 +20,9 @@ export class AuthService {
   }
 
   async login(user: any, res: Response) {
-    const payload = { email: user.email, sub: user.id };
+    const roles = user.role === 1 ? [Role.Admin] : [Role.User];
+
+    const payload = { email: user.email, sub: user.guestid, roles };
     const token = this.jwtService.sign(payload);
     //Setting cookie have JWT
     res.cookie('jwtToken', token, {
@@ -28,6 +31,10 @@ export class AuthService {
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     });
+
+    console.log(payload);
+    console.log(roles);
+
     return {
       message: 'Đăng nhập thành công',
     };
